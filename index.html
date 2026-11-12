@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>দালাল ধরো</title>
+  <meta name="description" content="বাংলাদেশের সরকারি অফিস নিয়ে একটি ব্রাউজার গেম: ঘুষ না দিয়ে কাজ শেষ করুন, আর দালাল ধরুন।">
+  <meta name="theme-color" content="#0f3d2a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23006a4e'/><circle cx='45' cy='50' r='26' fill='%23f42a41'/><text x='50' y='66' font-size='44' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>৳</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <canvas id="overlay"></canvas>
+
+  <!-- ===== HUD ===== -->
+  <div id="hud" hidden>
+    <div class="topbar">
+      <div class="tb-office" id="hud-office"></div>
+      <div class="tb-stat"><span class="lbl">সময়</span><b id="hud-clock"></b></div>
+      <div class="tb-stat"><span class="lbl">টাকা</span><b id="hud-money"></b></div>
+      <span id="hud-copy" class="chip" hidden>📄 ফটোকপি আছে</span>
+      <span id="hud-status" class="chip warn"></span>
+      <span id="hud-line" class="chip line" hidden></span>
+      <div class="tb-btns">
+        <button id="btn-charter" title="সিটিজেন চার্টার">📜<span> চার্টার</span></button>
+        <button id="btn-notebook" title="নোটবুক (N)">📒<span> নোটবুক</span></button>
+        <button id="btn-pause" title="বিরতি (Esc)">⏸</button>
+      </div>
+    </div>
+    <div id="objectives">
+      <h4>আপনার কাজ</h4>
+      <ol id="obj-list"></ol>
+    </div>
+    <div id="toasts"></div>
+    <div id="prompt" hidden></div>
+    <button id="btn-talk">💬 কথা বলুন</button>
+    <div id="look-hint">🖱 মাউস নাড়িয়ে চারপাশ দেখুন · <b>WASD</b> হাঁটুন · <b>Shift</b> দৌড়ান · <b>E</b> কথা বলুন</div>
+  </div>
+
+  <!-- ===== Dialog ===== -->
+  <div id="dialog" hidden>
+    <div class="dlg-box">
+      <canvas id="dlg-portrait" width="192" height="220"></canvas>
+      <div class="dlg-main">
+        <div class="dlg-head"><b id="dlg-name"></b><span id="dlg-title"></span></div>
+        <div id="dlg-text"></div>
+        <div id="dlg-choices"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Notebook ===== -->
+  <aside id="notebook" hidden>
+    <div class="nb-head"><h3>📒 নোটবুক</h3><button id="nb-close">✕</button></div>
+    <p class="small">যাদের সাথে দেখা হয়েছে, সবার কথা। "সাহায্যের" নামে যে টাকা চায়, সে-ই দালাল — পুলিশকে জানান।</p>
+    <div id="nb-list"></div>
+  </aside>
+
+  <!-- ===== Pause ===== -->
+  <div id="pause" class="overlay" hidden>
+    <div class="panel narrow">
+      <h2>বিরতি</h2>
+      <button id="pause-resume" class="btn primary">আবার শুরু</button>
+      <button id="pause-quit" class="btn">মূল মেনুতে ফিরুন</button>
+    </div>
+  </div>
+
+  <!-- ===== Title ===== -->
+  <section id="title" class="screen">
+    <div class="title-wrap">
+      <div class="flag-sun"></div>
+      <h1><span class="bn">দালাল ধরো</span><span class="en">DALAL DHORO</span></h1>
+      <p class="tag">বাংলাদেশের সরকারি অফিসে নিজের কাজ শেষ করুন —<br>এক টাকাও <b>ঘুষ</b> না দিয়ে।</p>
+      <div class="title-btns">
+        <button id="btn-play" class="btn primary big">খেলা শুরু</button>
+        <button id="btn-how" class="btn">কীভাবে খেলবেন</button>
+      </div>
+      <p id="load-status" class="credit">বাস্তব মানুষ লোড হচ্ছে…</p>
+      <p class="credit">দালাল, "স্পিড মানি" আর "কাল আসেন" নিয়ে একটি গেম।</p>
+    </div>
+  </section>
+
+  <!-- ===== How to play ===== -->
+  <section id="howto" class="screen" hidden>
+    <div class="panel">
+      <h2>কীভাবে খেলবেন</h2>
+      <div class="how-grid">
+        <div><h4>🎯 লক্ষ্য</h4><p>বিকাল ৫টায় অফিস বন্ধ হওয়ার আগে আপনার কাজের সব ধাপ (উপরে বাঁ দিকে লেখা) শেষ করুন — টাকা না হারিয়ে। প্রতিবার কোন অফিসে যাবেন, গেম নিজেই ঠিক করে দেবে।</p></div>
+        <div><h4>🕹 নিয়ন্ত্রণ</h4><p><b>মাউস</b> নাড়িয়ে চারপাশ দেখুন, <b>WASD</b> দিয়ে হাঁটুন, <b>Shift</b> দৌড়, <b>E</b> দিয়ে সামনের মানুষের সাথে কথা বলুন, <b>১–৪</b> দিয়ে উত্তর বাছুন, <b>N</b> নোটবুক, <b>Esc</b> বিরতি।<br>মোবাইলে: বাঁ পাশে টেনে হাঁটুন, ডান পাশে টেনে দেখুন, ট্যাপ করে (বা 💬) কথা বলুন।</p></div>
+        <div><h4>🕵 দালাল</h4><p>লোকজন এগিয়ে এসে সাহায্য করতে চাইবে। ভালো মানুষ কিছু চায় না। দালাল টাকা চায় — আর <b>সবসময় ঠকায়</b>: পালিয়ে যায়, আরও টাকা চায়, জাল স্লিপ দেয়, নয়তো বলে "কাজ হবে না"।</p></div>
+        <div><h4>👮 পুলিশ</h4><p>দালালের কথা পুলিশকে জানান (গেটের পুলিশ বক্স বা ভিতরে দরজার পাশে)। সাথে সাথে গ্রেপ্তার করবে, আর পালিয়ে না গেলে টাকাও ফেরত দেবে। নির্দোষকে রিপোর্ট করলে সময় নষ্ট।</p></div>
+        <div><h4>🏛 অফিসার</h4><p>প্রতিটি ধাপের দুটি কাউন্টার। কিছু অফিসার ঘুষখোর — "স্পিড মানি" না চাওয়া পর্যন্ত বোঝার উপায় নেই। ঘুষ দিন, না বলুন (ফাইল আটকাবে), অথবা <b>দুদক হটলাইন ১০৬</b>-এ কল দিন।</p></div>
+        <div><h4>🔎 সূত্র</h4><p>ঘুষখোর কাউন্টারে লাইন সন্দেহজনকভাবে ছোট। দালালরা ঘুষখোর ডেস্কে গিয়ে ফিসফিস করে (৳)। লোকজন আর চা-ওয়ালার কাছে খবর নিন। আসল ফি জানতে <b>সিটিজেন চার্টার</b> পড়ুন।</p></div>
+      </div>
+      <button id="how-back" class="btn primary">ফিরে যান</button>
+    </div>
+  </section>
+
+  <!-- ===== Briefing (the office is chosen automatically) ===== -->
+  <section id="briefing" class="screen" hidden>
+    <div class="panel">
+      <h2 id="brief-title"></h2>
+      <div id="brief-body"></div>
+      <div class="row">
+        <button id="brief-back" class="btn">ফিরে যান</button>
+        <button id="brief-go" class="btn primary">অফিসে ঢুকুন</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Result ===== -->
+  <section id="result" class="screen" hidden>
+    <div class="panel">
+      <div id="res-stars" class="stars"></div>
+      <h2 id="res-title"></h2>
+      <p id="res-msg"></p>
+      <div id="res-stats"></div>
+      <div class="row">
+        <button id="res-menu" class="btn">মূল মেনু</button>
+        <button id="res-retry" class="btn">আবার চেষ্টা</button>
+        <button id="res-next" class="btn primary">অন্য অফিস</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/render3d.js"></script>
+  <script src="js/humans3d.js"></script>
+  <script src="js/rocketbox.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

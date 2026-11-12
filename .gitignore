@@ -1,0 +1,6 @@
+# local-only files
+_preview/
+node_modules/
+.claude/
+.vercel/
+*.tmp.js
